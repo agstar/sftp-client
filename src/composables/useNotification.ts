@@ -91,8 +91,8 @@ export function useNotification() {
       const id = key;
       const newNotification: Notification = {
         id,
-        persistent: true,
-        duration: 0,
+        persistent: false,
+        duration: 1000,
         ...notification,
       };
       notifications.value.push(newNotification);
