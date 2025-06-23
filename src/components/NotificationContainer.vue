@@ -65,6 +65,21 @@
             >
               {{ notification.message }}
             </p>
+
+            <!-- 操作按钮 -->
+            <div v-if="notification.actions && notification.actions.length > 0" class="flex space-x-2 mt-3">
+              <button
+                v-for="action in notification.actions"
+                :key="action.label"
+                @click="action.action"
+                :class="[
+                  'btn btn-xs',
+                  getActionButtonClasses(action.style || 'primary')
+                ]"
+              >
+                {{ action.label }}
+              </button>
+            </div>
           </div>
 
           <!-- 关闭按钮 -->
@@ -136,6 +151,17 @@ const getProgressClasses = (type: string) => {
     info: 'bg-blue-500',
   };
   return classes[type as keyof typeof classes] || classes.info;
+};
+
+const getActionButtonClasses = (style: string) => {
+  const classes = {
+    primary: 'btn-primary',
+    secondary: 'btn-secondary',
+    success: 'btn-success',
+    warning: 'btn-warning',
+    error: 'btn-error',
+  };
+  return classes[style as keyof typeof classes] || classes.primary;
 };
 </script>
 

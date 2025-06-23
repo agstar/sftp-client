@@ -1,5 +1,11 @@
 import { ref, reactive } from 'vue';
 
+export interface NotificationAction {
+  label: string;
+  action: () => void;
+  style?: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+}
+
 export interface Notification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
@@ -7,6 +13,7 @@ export interface Notification {
   message?: string;
   duration?: number;
   persistent?: boolean;
+  actions?: NotificationAction[];
 }
 
 const notifications = ref<Notification[]>([]);

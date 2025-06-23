@@ -227,6 +227,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
+import { openPath } from '@tauri-apps/plugin-opener';
 import { useNotification } from '../composables/useNotification';
 
 // Props
@@ -502,20 +503,40 @@ const downloadFile = async (file: any) => {
       transferId
     });
 
-    // 更新为成功状态
+    // 创建打开文件夹的函数
+    const openFileFolder = async () => {
+      try {
+        // 获取文件所在目录
+        const fileDir = localPath.substring(0, localPath.lastIndexOf(localPath.includes('\\') ? '\\' : '/'));
+        await openPath(fileDir);
+        console.log('已打开文件夹:', fileDir);
+      } catch (err) {
+        console.error('打开文件夹失败:', err);
+        error('打开失败', '无法打开文件所在文件夹');
+      }
+    };
+
+    // 更新为成功状态，添加打开文件夹按钮
     createOrUpdatePersistent(notificationKey, {
       type: 'success',
       title: '下载完成',
-      message: `${result}\n保存位置: ${localPath}`
+      message: `${result}\n保存位置: ${localPath}`,
+      actions: [
+        {
+          label: '打开文件夹',
+          action: openFileFolder,
+          style: 'primary'
+        }
+      ]
     });
 
     // 传输完成状态会由进度监听器处理，这里不需要重复发送
 
-    // 1秒后自动移除成功通知
+    // 3秒后自动移除成功通知
     setTimeout(() => {
       console.log('尝试移除下载通知:', notificationId, '通知键:', notificationKey);
       removeNotification(notificationKey);
-    }, 1000);
+    }, 3000);
 
   } catch (err) {
     // 更新为错误状态
@@ -856,7 +877,7 @@ onMounted(async () => {
         setTimeout(() => {
           activeTransfers.value.delete(progressData.transfer_id);
           emit('transferComplete', progressData.transfer_id);
-        }, 2000); // 2秒后清理，给用户足够时间看到完成状态
+        }, 3000); // 3秒后清理，给用户足够时间看到完成状态
       }
     }
   });
