@@ -5,52 +5,62 @@
       :key="transfer.id"
       class="card-elegant p-4 animate-slide-up"
     >
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center space-x-2">
-          <svg 
+      <div class="flex items-center mb-2">
+        <!-- 文件信息区域，使用 flex-1 和 min-width: 0 确保可以正确截断 -->
+        <div class="flex items-center space-x-2 flex-1 min-w-0">
+          <svg
             v-if="transfer.type === 'upload'"
-            class="w-5 h-5 text-blue-600" 
-            fill="none" 
-            stroke="currentColor" 
+            class="w-5 h-5 text-blue-600 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 11l3-3m0 0l3 3m-3-3v8"/>
           </svg>
-          <svg 
+          <svg
             v-else
-            class="w-5 h-5 text-green-600" 
-            fill="none" 
-            stroke="currentColor" 
+            class="w-5 h-5 text-green-600 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
             viewBox="0 0 24 24"
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <span class="font-medium text-gray-800 truncate">{{ transfer.filename }}</span>
+          <!-- 文件名使用 truncate 和 title 属性显示完整名称 -->
+          <span
+            class="font-medium text-gray-800 truncate"
+            :title="transfer.filename"
+          >
+            {{ transfer.filename }}
+          </span>
         </div>
-        
-        <!-- 只在传输进行中时显示取消按钮 -->
-        <button
-          v-if="transfer.status === 'transferring' || transfer.status === 'pending'"
-          @click="cancelTransfer(transfer.id)"
-          class="btn btn-ghost btn-xs text-gray-500 hover:text-red-600"
-          title="取消传输"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
 
-        <!-- 完成状态显示关闭按钮 -->
-        <button
-          v-else-if="transfer.status === 'completed' || transfer.status === 'error' || transfer.status === 'cancelled'"
-          @click="emit('transferComplete', transfer.id)"
-          class="btn btn-ghost btn-xs text-gray-500 hover:text-gray-700"
-          title="关闭"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
+        <!-- 按钮区域，使用 flex-shrink-0 确保按钮不会被压缩 -->
+        <div class="flex-shrink-0 ml-2">
+          <!-- 只在传输进行中时显示取消按钮 -->
+          <button
+            v-if="transfer.status === 'transferring' || transfer.status === 'pending'"
+            @click="cancelTransfer(transfer.id)"
+            class="btn btn-ghost btn-xs text-gray-500 hover:text-red-600"
+            title="取消传输"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+
+          <!-- 完成状态显示关闭按钮 -->
+          <button
+            v-else-if="transfer.status === 'completed' || transfer.status === 'error' || transfer.status === 'cancelled'"
+            @click="emit('transferComplete', transfer.id)"
+            class="btn btn-ghost btn-xs text-gray-500 hover:text-gray-700"
+            title="关闭"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
       </div>
       
       <div class="space-y-2">
