@@ -224,7 +224,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { useNotification } from '../composables/useNotification';
@@ -837,7 +837,7 @@ onMounted(async () => {
           message: `文件 ${updatedTransfer.filename} 下载已取消`
         });
         
-        // 2秒后移除
+        // 2秒后移除通知和清理传输记录
         setTimeout(() => {
           removeNotification(notificationKey);
           activeTransfers.value.delete(progressData.transfer_id);
@@ -851,13 +851,12 @@ onMounted(async () => {
         updatedTransfer.status = 'completed';
         activeTransfers.value.set(progressData.transfer_id, updatedTransfer);
         emit('transferUpdate', updatedTransfer);
-        
-        // 移除通知
-        const notificationKey = `download_${updatedTransfer.filename}_${progressData.transfer_id.split('_')[1]}`;
+
+        // 立即发送完成事件，让传输弹窗能够正确处理完成状态
         setTimeout(() => {
           activeTransfers.value.delete(progressData.transfer_id);
           emit('transferComplete', progressData.transfer_id);
-        }, 5000); // 5秒后清理
+        }, 2000); // 2秒后清理，给用户足够时间看到完成状态
       }
     }
   });

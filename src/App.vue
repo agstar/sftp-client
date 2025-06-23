@@ -10,7 +10,7 @@ import { useNotification } from "./composables/useNotification";
 import { useKeyboardShortcuts } from "./composables/useKeyboardShortcuts";
 
 // 通知系统
-const { success, error, warning, info } = useNotification();
+const { success, error, info } = useNotification();
 
 // 应用状态
 const appState = reactive({
@@ -68,18 +68,21 @@ const handleTransferUpdate = (transfer: any) => {
   if (index > -1) {
     // 更新现有传输项
     appState.transfers[index] = transfer;
+
+    // 如果传输完成，设置自动清理定时器
+    if (transfer.status === 'completed') {
+      setTimeout(() => {
+        handleTransferComplete(transfer.id);
+      }, 3000); // 3秒后自动清理完成的传输
+    }
   }
 };
 
 const handleTransferComplete = (transferId: string) => {
   const transferIndex = appState.transfers.findIndex(t => t.id === transferId);
   if (transferIndex > -1) {
-    const transfer = appState.transfers[transferIndex];
     appState.transfers.splice(transferIndex, 1);
     // 移除这里的通知，因为文件操作组件已经有持久化通知了
-    // if (transfer.status === 'completed') {
-    //   success('传输完成', `文件 ${transfer.filename} 传输完成`);
-    // }
   }
 };
 

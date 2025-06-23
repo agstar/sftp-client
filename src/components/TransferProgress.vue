@@ -1,7 +1,7 @@
 <template>
   <div class="fixed bottom-4 right-4 w-96 space-y-2 z-50">
-    <div 
-      v-for="transfer in transfers" 
+    <div
+      v-for="transfer in activeTransfers"
       :key="transfer.id"
       class="card-elegant p-4 animate-slide-up"
     >
@@ -28,9 +28,24 @@
           <span class="font-medium text-gray-800 truncate">{{ transfer.filename }}</span>
         </div>
         
-        <button 
+        <!-- 只在传输进行中时显示取消按钮 -->
+        <button
+          v-if="transfer.status === 'transferring' || transfer.status === 'pending'"
           @click="cancelTransfer(transfer.id)"
           class="btn btn-ghost btn-xs text-gray-500 hover:text-red-600"
+          title="取消传输"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <!-- 完成状态显示关闭按钮 -->
+        <button
+          v-else-if="transfer.status === 'completed' || transfer.status === 'error' || transfer.status === 'cancelled'"
+          @click="emit('transferComplete', transfer.id)"
+          class="btn btn-ghost btn-xs text-gray-500 hover:text-gray-700"
+          title="关闭"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -98,6 +113,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { invoke } from '@tauri-apps/api/core';
 
 // Props
 const props = defineProps<{
@@ -112,6 +128,17 @@ const emit = defineEmits<{
 // 计算属性
 const completedTransfers = computed(() => {
   return props.transfers.filter(t => t.status === 'completed');
+});
+
+// 活跃的传输（正在进行或等待中的）
+const activeTransfers = computed(() => {
+  return props.transfers.filter(t =>
+    t.status === 'transferring' ||
+    t.status === 'pending' ||
+    t.status === 'completed' ||
+    t.status === 'error' ||
+    t.status === 'cancelled'
+  );
 });
 
 // 方法
@@ -143,9 +170,19 @@ const getStatusText = (status: string) => {
   return statusMap[status] || status;
 };
 
-const cancelTransfer = (transferId: string) => {
-  // 这里应该调用后端取消传输的方法
-  emit('transferComplete', transferId);
+const cancelTransfer = async (transferId: string) => {
+  try {
+    // 调用后端取消传输的方法
+    await invoke('cancel_transfer', { transferId });
+    console.log('传输已取消:', transferId);
+
+    // 发送完成事件，让App.vue清理传输记录
+    emit('transferComplete', transferId);
+  } catch (err) {
+    console.error('取消传输失败:', err);
+    // 即使取消失败，也从UI中移除
+    emit('transferComplete', transferId);
+  }
 };
 
 const clearCompleted = () => {
