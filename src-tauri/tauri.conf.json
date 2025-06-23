@@ -5,16 +5,28 @@
   "identifier": "com.sftp-web.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1422",
     "beforeBuildCommand": "pnpm build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "sftp-web",
-        "width": 800,
-        "height": 600
+        "title": "SFTP 客户端",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "center": true,
+        "resizable": true,
+        "maximizable": true,
+        "minimizable": true,
+        "closable": true,
+        "decorations": true,
+        "transparent": false,
+        "fullscreen": false,
+        "focus": true,
+        "visible": true
       }
     ],
     "security": {
