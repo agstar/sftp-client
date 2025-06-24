@@ -227,7 +227,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { openPath } from '@tauri-apps/plugin-opener';
 import { useNotification } from '../composables/useNotification';
 
 // Props
@@ -506,13 +505,40 @@ const downloadFile = async (file: any) => {
     // 创建打开文件夹的函数
     const openFileFolder = async () => {
       try {
+        console.log('原始文件路径:', localPath);
+
+        // 规范化路径分隔符
+        const normalizedPath = localPath.replace(/\//g, '\\');
+        console.log('规范化后路径:', normalizedPath);
+
         // 获取文件所在目录
-        const fileDir = localPath.substring(0, localPath.lastIndexOf(localPath.includes('\\') ? '\\' : '/'));
-        await openPath(fileDir);
-        console.log('已打开文件夹:', fileDir);
+        const lastSeparatorIndex = normalizedPath.lastIndexOf('\\');
+        if (lastSeparatorIndex === -1) {
+          throw new Error('无效的文件路径');
+        }
+
+        const fileDir = normalizedPath.substring(0, lastSeparatorIndex);
+        console.log('文件所在目录:', fileDir);
+
+        // 检查目录是否存在
+        if (!fileDir || fileDir.length === 0) {
+          throw new Error('无法确定文件目录');
+        }
+
+        // 使用后端方法打开文件夹
+        await invoke('open_file_folder', { path: fileDir });
+        console.log('成功打开文件夹:', fileDir);
+
+        // 显示成功提示
+        success('打开成功', '已打开文件所在文件夹');
+
       } catch (err) {
         console.error('打开文件夹失败:', err);
-        error('打开失败', '无法打开文件所在文件夹');
+        console.error('错误详情:', {
+          originalPath: localPath,
+          error: err
+        });
+        error('打开失败', `无法打开文件所在文件夹: ${err}`);
       }
     };
 

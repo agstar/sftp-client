@@ -583,11 +583,63 @@ async fn disconnect_sftp(connection_id: String) -> Result<String, String> {
     Ok("连接已断开".to_string())
 }
 
+// 打开文件夹
+#[tauri::command]
+async fn open_file_folder(path: String) -> Result<String, String> {
+    println!("打开文件夹: {}", path);
+
+    tokio::task::spawn_blocking(move || {
+        #[cfg(target_os = "windows")]
+        {
+            use std::process::Command;
+            let result = Command::new("explorer")
+                .arg(&path)
+                .spawn();
+
+            match result {
+                Ok(_) => Ok(format!("已打开文件夹: {}", path)),
+                Err(e) => Err(format!("打开文件夹失败: {}", e))
+            }
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            use std::process::Command;
+            let result = Command::new("open")
+                .arg(&path)
+                .spawn();
+
+            match result {
+                Ok(_) => Ok(format!("已打开文件夹: {}", path)),
+                Err(e) => Err(format!("打开文件夹失败: {}", e))
+            }
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            use std::process::Command;
+            let result = Command::new("xdg-open")
+                .arg(&path)
+                .spawn();
+
+            match result {
+                Ok(_) => Ok(format!("已打开文件夹: {}", path)),
+                Err(e) => Err(format!("打开文件夹失败: {}", e))
+            }
+        }
+
+        #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+        {
+            Err("不支持的操作系统".to_string())
+        }
+    }).await.map_err(|e| format!("任务执行失败: {}", e))?
+}
+
 // 取消传输任务
 #[tauri::command]
 async fn cancel_transfer(transfer_id: String) -> Result<String, String> {
     println!("取消传输: {}", transfer_id);
-    
+
     let mut tasks = TRANSFER_TASKS.lock().unwrap();
     if let Some(cancel_flag) = tasks.get(&transfer_id) {
         cancel_flag.store(true, std::sync::atomic::Ordering::SeqCst);
@@ -615,6 +667,7 @@ pub fn run() {
             get_connection_info,
             get_downloads_directory,
             disconnect_sftp,
+            open_file_folder,
             cancel_transfer
         ])
         .run(tauri::generate_context!())
