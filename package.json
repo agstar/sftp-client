@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:debug": "tauri build --debug",
+    "lint": "vue-tsc --noEmit",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.10",

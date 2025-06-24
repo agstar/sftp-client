@@ -1,0 +1,140 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+          - platform: 'ubuntu-20.04'
+            args: ''
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Build the app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'SFTP Web v__VERSION__'
+          releaseBody: 'See the assets to download and install this version.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: SFTP Web ${{ github.ref_name }}
+          body: |
+            ## 🚀 SFTP Web ${{ github.ref_name }}
+            
+            ### 📦 下载说明
+            
+            请根据您的操作系统选择对应的安装包：
+            
+            - **Windows**: `*.msi` 或 `*.exe` 文件
+            - **macOS**: `*.dmg` 文件  
+            - **Linux**: `*.AppImage` 或 `*.deb` 文件
+            
+            ### ✨ 主要功能
+            
+            - 🔐 安全的SFTP连接管理
+            - 📁 直观的文件浏览和管理
+            - ⬆️⬇️ 高效的文件上传下载
+            - 📊 实时传输进度显示
+            - 💾 连接配置持久化
+            - 🎯 下载完成后快速打开文件夹
+            - 🌍 跨平台支持 (Windows/macOS/Linux)
+            
+            ### 🔧 安装说明
+            
+            #### Windows
+            1. 下载 `.msi` 安装包
+            2. 双击运行安装程序
+            3. 按照向导完成安装
+            
+            #### macOS
+            1. 下载 `.dmg` 文件
+            2. 双击挂载磁盘映像
+            3. 将应用拖拽到 Applications 文件夹
+            
+            #### Linux
+            1. 下载 `.AppImage` 文件
+            2. 添加执行权限：`chmod +x *.AppImage`
+            3. 双击运行或命令行执行
+            
+            或者下载 `.deb` 包：
+            ```bash
+            sudo dpkg -i *.deb
+            sudo apt-get install -f  # 修复依赖
+            ```
+            
+            ### 🐛 问题反馈
+            
+            如果您在使用过程中遇到任何问题，请在 [Issues](https://github.com/${{ github.repository }}/issues) 页面提交反馈。
+            
+            ### 📝 更新日志
+            
+            详细的更新内容请查看提交历史。
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
