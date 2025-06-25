@@ -22,7 +22,7 @@ jobs:
           - platform: 'macos-latest'
             os_name: 'macOS'
             target: 'universal-apple-darwin'
-          - platform: 'ubuntu-20.04'
+          - platform: 'ubuntu-22.04'
             os_name: 'Linux'
             target: ''
           - platform: 'windows-latest'
